@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class Note {
-  final int id;
+  final String id;
   final String title;
 
   Note({required this.id, required this.title});
 
   factory Note.fromJson(Map<String, dynamic> json) {
-    return Note(id: json['id'], title: json['title']);
+    return Note(id: json['_id'], title: json['title']);
   }
 }
+
 
 class NoteAppScreen extends StatefulWidget {
   @override
@@ -19,7 +20,7 @@ class NoteAppScreen extends StatefulWidget {
 }
 
 class _NoteAppScreenState extends State<NoteAppScreen> {
-  List<Note> _notes = [];
+  List<Note> notes = [];
   final TextEditingController _controller = TextEditingController();
   bool _isGridView = false;
 
@@ -34,7 +35,7 @@ class _NoteAppScreenState extends State<NoteAppScreen> {
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       setState(() {
-        _notes = data.map((json) => Note.fromJson(json)).toList();
+        notes = data.map((json) => Note.fromJson(json)).toList();
       });
     } else {
       throw Exception('Erreur lors du chargement des notes');
@@ -62,9 +63,9 @@ class _NoteAppScreenState extends State<NoteAppScreen> {
   }
 
   void _addNote() async {
-    final noteText = _controller.text.trim();
-    if (noteText.isNotEmpty) {
-      await addNoteToServer(noteText);
+    final text = _controller.text;
+    if (text.isNotEmpty) {
+      await addNoteToServer(text);
       _controller.clear();
     }
   }
@@ -83,8 +84,8 @@ class _NoteAppScreenState extends State<NoteAppScreen> {
           icon: Icon(Icons.delete, color: Colors.red),
           onPressed: () {
             setState(() {
-              _notes.removeWhere((n) => n.id == note.id);
-              // لاحقاً: أضف حذف من السيرفر هنا
+              notes.removeWhere((n) => n.id == note.id);
+              // يمكنك إضافة حذف من السيرفر هنا مستقبلاً
             });
           },
         ),
@@ -93,26 +94,26 @@ class _NoteAppScreenState extends State<NoteAppScreen> {
   }
 
   Widget _buildNotesView() {
-    if (_notes.isEmpty) {
+    if (notes.isEmpty) {
       return Center(child: Text('Aucune note.'));
     }
 
     if (_isGridView) {
       return GridView.builder(
         padding: EdgeInsets.all(12),
-        itemCount: _notes.length,
+        itemCount: notes.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           childAspectRatio: 3 / 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
-        itemBuilder: (context, index) => _buildNoteCard(_notes[index]),
+        itemBuilder: (context, index) => _buildNoteCard(notes[index]),
       );
     } else {
       return ListView.builder(
-        itemCount: _notes.length,
-        itemBuilder: (context, index) => _buildNoteCard(_notes[index]),
+        itemCount: notes.length,
+        itemBuilder: (context, index) => _buildNoteCard(notes[index]),
       );
     }
   }
